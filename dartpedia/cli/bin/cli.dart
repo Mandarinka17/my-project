@@ -1,17 +1,17 @@
 import 'dart:io';
 import 'package:http/http.dart' as http;
-//import 'dart:convert';
+import 'dart:convert';
 
 const version = '0.0.1';
 
-void main(List<String> arguments) async {
+void main(List<String> arguments) {
   if (arguments.isEmpty || arguments.first == 'help') {
     printUsage();
   } else if (arguments.first == 'version') {
     print('Dartpedia CLI version $version');
-  } else if (arguments.first == 'search') {
+  } else if (arguments.first == 'wikipedia') {   // команда изменена на 'wikipedia'
     final inputArgs = arguments.length > 1 ? arguments.sublist(1) : null;
-    await searchWikipedia(inputArgs);
+    searchWikipedia(inputArgs);                   // вызов без await (main не async)
   } else {
     printUsage();
   }
@@ -35,7 +35,23 @@ Future<void> searchWikipedia(List<String>? arguments) async {
   print('Looking up articles about "$articleTitle". Please wait.');
 
   final articleContent = await getWikipediaArticle(articleTitle);
-  print(articleContent);
+
+  if (articleContent.startsWith('Error:')) {
+    print(articleContent);
+    return;
+  }
+
+  try {
+    final data = jsonDecode(articleContent);
+    final extract = data['extract'];
+    if (extract != null && extract.isNotEmpty) {
+      print(extract);
+    } else {
+      print('Краткое содержание не найдено.');
+    }
+  } catch (e) {
+    print('Ошибка при обработке ответа: $e');
+  }
 }
 
 Future<String> getWikipediaArticle(String articleTitle) async {
@@ -53,6 +69,6 @@ Future<String> getWikipediaArticle(String articleTitle) async {
 
 void printUsage() {
   print(
-    "The following commands are valid: 'help', 'version', 'search <ARTICLE-TITLE>' "
+    "The following commands are valid: 'help', 'version', 'wikipedia <ARTICLE-TITLE>' "
   );
 }
