@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+//import 'dart:convert';
 
 const version = '0.0.1';
 
@@ -22,12 +22,20 @@ Future<void> searchWikipedia(List<String>? arguments) async {
 
   if (arguments == null || arguments.isEmpty) {
     print('Please provide an article title.');
-    articleTitle = stdin.readLineSync() ?? '';
+    final inputFromStdIn = stdin.readLineSync();
+    if (inputFromStdIn == null || inputFromStdIn.isEmpty) {
+      print('No article title provided. Exiting.');
+      return;
+    }
+    articleTitle = inputFromStdIn;
   } else {
     articleTitle = arguments.join(' ');
   }
 
-  await fetchWikipediaSummary(articleTitle);
+  print('Looking up articles about "$articleTitle". Please wait.');
+
+  final articleContent = await getWikipediaArticle(articleTitle);
+  print(articleContent);
 }
 
 Future<String> getWikipediaArticle(String articleTitle) async {
@@ -35,34 +43,11 @@ Future<String> getWikipediaArticle(String articleTitle) async {
     'ru.wikipedia.org',
     '/api/rest_v1/page/summary/$articleTitle',
   );
-
   final response = await http.get(url);
-
   if (response.statusCode == 200) {
     return response.body;
   } else {
     return 'Error: Failed to fetch article "$articleTitle". Status code: ${response.statusCode}';
-  }
-}
-
-Future<void> fetchWikipediaSummary(String articleTitle) async {
-  final result = await getWikipediaArticle(articleTitle);
-
-  if (result.startsWith('Error:')) {
-    print(result);
-    return;
-  }
-
-  try {
-    final data = jsonDecode(result);
-    final extract = data['extract'];
-    if (extract != null && extract.isNotEmpty) {
-      print(extract);
-    } else {
-      print('Краткое содержание не найдено.');
-    }
-  } catch (e) {
-    print('Ошибка при обработке ответа: $e');
   }
 }
 
