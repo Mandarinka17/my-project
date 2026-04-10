@@ -30,27 +30,39 @@ Future<void> searchWikipedia(List<String>? arguments) async {
   await fetchWikipediaSummary(articleTitle);
 }
 
+Future<String> getWikipediaArticle(String articleTitle) async {
+  final url = Uri.https(
+    'ru.wikipedia.org',
+    '/api/rest_v1/page/summary/$articleTitle',
+  );
+
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    return response.body;
+  } else {
+    return 'Error: Failed to fetch article "$articleTitle". Status code: ${response.statusCode}';
+  }
+}
+
 Future<void> fetchWikipediaSummary(String articleTitle) async {
-  final url = Uri.parse(
-      'https://ru.wikipedia.org/api/rest_v1/page/summary/${Uri.encodeComponent(articleTitle)}');
+  final result = await getWikipediaArticle(articleTitle);
+
+  if (result.startsWith('Error:')) {
+    print(result);
+    return;
+  }
 
   try {
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final extract = data['extract'];
-      if (extract != null && extract.isNotEmpty) {
-        print(extract);
-      } else {
-        print('Краткое содержание не найдено.');
-      }
-    } else if (response.statusCode == 404) {
-      print('Статья "$articleTitle" не найдена на Википедии.');
+    final data = jsonDecode(result);
+    final extract = data['extract'];
+    if (extract != null && extract.isNotEmpty) {
+      print(extract);
     } else {
-      print('Ошибка HTTP: ${response.statusCode}');
+      print('Краткое содержание не найдено.');
     }
   } catch (e) {
-    print('Ошибка соединения: $e');
+    print('Ошибка при обработке ответа: $e');
   }
 }
 
