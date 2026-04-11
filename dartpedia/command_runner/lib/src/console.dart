@@ -46,3 +46,48 @@ enum ConsoleColor {
   /// Применяет цвет фона только к указанному тексту (автоматический сброс).
   String applyBackground(String text) => '$enableBackground$text$reset';
 }
+/// Расширение для строк, добавляющее методы цветного форматирования и разбивки по длине.
+extension TextRendererUtils on String {
+  /// Применяет красный цвет (для ошибок).
+  String get errorText => ConsoleColor.red.applyForeground(this);
+
+  /// Применяет жёлтый цвет (для инструкций).
+  String get instructionText => ConsoleColor.yellow.applyForeground(this);
+
+  /// Применяет светло-голубой цвет (для заголовков).
+  String get titleText => ConsoleColor.lightBlue.applyForeground(this);
+
+  /// Разбивает строку на список строк, каждая из которых не длиннее [maxLength].
+  /// Слова не разрываются, а переносятся целиком.
+  List<String> splitLinesByLength(int maxLength) {
+    final words = split(' ');
+    final lines = <String>[];
+    final buffer = StringBuffer();
+
+    for (int i = 0; i < words.length; i++) {
+      final word = words[i];
+      // Если добавление этого слова с пробелом не превышает длину
+      if (buffer.length + word.length + (buffer.isEmpty ? 0 : 1) <= maxLength) {
+        if (buffer.isNotEmpty) buffer.write(' ');
+        buffer.write(word);
+      } else {
+        // Если слово уже есть в буфере, сохраняем строку и начинаем новую
+        if (buffer.isNotEmpty) {
+          lines.add(buffer.toString());
+          buffer.clear();
+        }
+        // Если одно слово длиннее maxLength – принудительно разрываем? 
+        // По заданию – не разрываем, но для красоты можно добавить проверку.
+        // Здесь просто добавим слово целиком (даже если длиннее)
+        if (word.length > maxLength) {
+          lines.add(word);
+        } else {
+          buffer.write(word);
+        }
+      }
+    }
+    // Добавляем остаток
+    if (buffer.isNotEmpty) lines.add(buffer.toString());
+    return lines;
+  }
+}

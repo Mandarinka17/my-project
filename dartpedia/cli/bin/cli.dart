@@ -7,12 +7,13 @@ void main(List<String> arguments) {
     executableName: 'dartpedia',
     version: version,
     onError: (Object error) {
-      // Выводим ошибку красным цветом
-      print(ConsoleColor.red.applyForeground('Ошибка: $error'));
+      // Критические ошибки (Error) пробрасываем дальше
       if (error is Error) {
-        // Для критических ошибок можно вывести стек и завершить
-        print(error.stackTrace);
-        // exit(1);
+        throw error;
+      }
+      // Исключения выводим красным цветом
+      if (error is Exception) {
+        print(ConsoleColor.red.applyForeground('Ошибка: $error'));
       }
     },
   );
