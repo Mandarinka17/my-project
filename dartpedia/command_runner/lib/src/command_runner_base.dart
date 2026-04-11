@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'dart:io';
 import 'arguments.dart';
 
 class CommandRunner {
@@ -17,22 +16,31 @@ class CommandRunner {
     command.runner = this;
   }
 
-  ArgResults parse(List<String> input) {
-    final results = ArgResults();
-    if (input.isEmpty) {
-      return results;
-    }
-    final commandName = input.first;
-    final command = _commands[commandName];
-    if (command != null) {
-      results.command = command;
-      // Здесь можно добавить парсинг аргументов команды,
-      // но для простоты оставим как есть – вы передадите commandArg позже.
-      if (input.length > 1) {
-        results.commandArg = input.skip(1).join(' ');
+  Command? getCommand(String name) => _commands[name];
+
+  String get usage {
+    final exeName = executableName ?? 'dart run bin/cli.dart';
+    return 'Usage: $exeName <command> [options]';
+  }
+
+  String commandUsage(Command command) {
+    final buffer = StringBuffer();
+    buffer.writeln('Command: ${command.name} - ${command.description}');
+    if (command.options.isNotEmpty) {
+      buffer.writeln('Options:');
+      for (var opt in command.options) {
+        buffer.writeln('  ${opt.usage}');
       }
     }
-    return results;
+    return buffer.toString();
+  }
+
+  void showHelp() {
+    print(usage);
+    print('Available commands:');
+    for (var cmd in _commands.values) {
+      print('  ${cmd.name} - ${cmd.description}');
+    }
   }
 
   Future<void> run(List<String> arguments) async {
@@ -41,20 +49,20 @@ class CommandRunner {
       return;
     }
 
-    final results = parse(arguments);
-    if (results.command != null) {
-      await results.command!.run(results);
-    } else {
-      print('Unknown command: ${arguments.first}');
+    final commandName = arguments.first;
+    final command = _commands[commandName];
+    if (command == null) {
+      print('Unknown command: $commandName');
       showHelp();
+      return;
     }
-  }
 
-  void showHelp() {
-    print('Usage: ${executableName ?? "dart run bin/cli.dart"} <command> [options]');
-    print('Available commands:');
-    for (var cmd in _commands.values) {
-      print('  ${cmd.name} - ${cmd.description}');
+    // Передаём остальные аргументы как commandArg (упрощённо)
+    final args = arguments.skip(1).toList();
+    final argResults = ArgResults()..command = command;
+    if (args.isNotEmpty) {
+      argResults.commandArg = args.join(' ');
     }
+    await command.run(argResults);
   }
 }
