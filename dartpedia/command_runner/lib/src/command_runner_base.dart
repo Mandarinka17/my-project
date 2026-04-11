@@ -1,12 +1,19 @@
+import 'dart:async';
 import 'dart:collection';
+import 'dart:io';
+
 import 'arguments.dart';
+import 'exceptions.dart';
 
 class CommandRunner {
   final Map<String, Command> _commands = {};
   final String? executableName;
   final String version;
+  
+  /// Обработчик ошибок (опциональный). Вызывается при возникновении исключения.
+  FutureOr<void> Function(Object)? onError;
 
-  CommandRunner({this.executableName, required this.version});
+  CommandRunner({this.executableName, required this.version, this.onError});
 
   UnmodifiableSetView<Command> get commands =>
       UnmodifiableSetView(_commands.values.toSet());
@@ -43,26 +50,121 @@ class CommandRunner {
     }
   }
 
-  Future<void> run(List<String> arguments) async {
-    if (arguments.isEmpty) {
-      showHelp();
-      return;
-    }
+  /// Удаляет один или два дефиса из начала строки опции.
+  String _removeDash(String arg) {
+    if (arg.startsWith('--')) return arg.substring(2);
+    if (arg.startsWith('-')) return arg.substring(1);
+    return arg;
+  }
 
-    final commandName = arguments.first;
+  /// Парсит аргументы, выбрасывает ArgumentException при ошибках.
+  ArgResults parse(List<String> input) {
+    final results = ArgResults();
+    if (input.isEmpty) return results;
+
+    // 1. Проверка: первый аргумент – известная команда
+    final commandName = input.first;
     final command = _commands[commandName];
     if (command == null) {
-      print('Unknown command: $commandName');
-      showHelp();
-      return;
+      throw ArgumentException(
+        'The first word of input must be a command.',
+        command: null,
+        argumentName: commandName,
+      );
+    }
+    results.command = command;
+    input = input.sublist(1);
+
+    // 2. Проверка: только одна команда
+    if (input.isNotEmpty && _commands.containsKey(input.first)) {
+      throw ArgumentException(
+        'Input can only contain one command. Got ${input.first} and ${command.name}',
+        command: command.name,
+        argumentName: input.first,
+      );
     }
 
-    // Передаём остальные аргументы как commandArg (упрощённо)
-    final args = arguments.skip(1).toList();
-    final argResults = ArgResults()..command = command;
-    if (args.isNotEmpty) {
-      argResults.commandArg = args.join(' ');
+    final Map<Option, Object?> inputOptions = {};
+    int i = 0;
+    while (i < input.length) {
+      final arg = input[i];
+      if (arg.startsWith('-')) {
+        final base = _removeDash(arg);
+        final option = command.options.firstWhere(
+          (opt) => opt.name == base || opt.abbr == base,
+          orElse: () {
+            throw ArgumentException(
+              'Unknown option $arg',
+              command: command.name,
+              argumentName: arg,
+            );
+          },
+        );
+
+        if (option.type == OptionType.flag) {
+          inputOptions[option] = true;
+          i++;
+          continue;
+        }
+
+        if (option.type == OptionType.option) {
+          // Проверка: после опции должно быть значение
+          if (i + 1 >= input.length) {
+            throw ArgumentException(
+              'Option ${option.name} requires an argument',
+              command: command.name,
+              argumentName: option.name,
+            );
+          }
+          final next = input[i + 1];
+          if (next.startsWith('-')) {
+            throw ArgumentException(
+              'Option ${option.name} requires an argument, but got another option $next',
+              command: command.name,
+              argumentName: option.name,
+            );
+          }
+          inputOptions[option] = next;
+          i += 2;
+          continue;
+        }
+      } else {
+        // Позиционный аргумент (commandArg)
+        if (results.commandArg != null) {
+          throw ArgumentException(
+            'Commands can only have up to one positional argument.',
+            command: command.name,
+            argumentName: arg,
+          );
+        }
+        results.commandArg = arg;
+        i++;
+      }
     }
-    await command.run(argResults);
+
+    results.options = inputOptions;
+    return results;
+  }
+
+  /// Запускает парсер и выполнение команды с обработкой ошибок.
+  Future<void> run(List<String> arguments) async {
+    try {
+      if (arguments.isEmpty) {
+        showHelp();
+        return;
+      }
+
+      final results = parse(arguments);
+      if (results.command != null) {
+        final output = await results.command!.run(results);
+        if (output != null) print(output);
+      }
+    } on Exception catch (e) {
+      if (onError != null) {
+        await onError!(e);
+      } else {
+        rethrow;
+      }
+    }
   }
 }
