@@ -1,6 +1,4 @@
-import 'package:command_runner/command_runner.dart';
-
+/// Пример использования пакета command_runner
 void main() {
-  var awesome = Awesome();
-  print('awesome: ${awesome.isAwesome}');
+  print('Пример работы command_runner');
 }
