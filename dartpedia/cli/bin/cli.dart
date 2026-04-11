@@ -1,27 +1,25 @@
 import 'package:command_runner/command_runner.dart';
 
-const version = '0.0.1';
-
 void main(List<String> arguments) {
   final runner = CommandRunner(
     executableName: 'dartpedia',
-    version: version,
+    version: '0.0.1',
+    onOutput: (String text) {
+      print('[OUTPUT] $text');   // без именованных аргументов
+    },
     onError: (Object error) {
-      // Критические ошибки (Error) пробрасываем дальше
       if (error is Error) {
         throw error;
       }
-      // Исключения выводим красным цветом
-      if (error is Exception) {
-        print(ConsoleColor.red.applyForeground('Ошибка: $error'));
-      }
+      print('Ошибка: $error');
     },
   );
 
   runner
-    ..addCommand(VersionCommand(version))
+    ..addCommand(VersionCommand('0.0.1'))
     ..addCommand(HelpCommand())
     ..addCommand(WikipediaCommand());
+    // ..addCommand(EchoCommand()); // закомментировано, т.к. не определён
 
-  runner.run(arguments);
+  runner.run(arguments);   // без arguments:
 }
