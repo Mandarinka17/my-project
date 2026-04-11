@@ -1,6 +1,5 @@
 import 'dart:async';
 import '../arguments.dart';
-import '../command_runner_base.dart';
 import '../console.dart';
 import '../exceptions.dart';
 

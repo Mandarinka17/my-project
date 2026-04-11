@@ -49,6 +49,7 @@ class CommandRunner {
     final output = usage +
         '\nAvailable commands:\n' +
         _commands.values.map((c) => '  ${c.name} - ${c.description}').join('\n');
+    // теперь используем onOutput
     if (onOutput != null) {
       onOutput!(output);
     } else {
