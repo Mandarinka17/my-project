@@ -32,13 +32,13 @@ enum ConsoleColor {
   final int b;
 
   /// Включает цвет текста для всего последующего вывода (до сброса).
-  String get enableForeground => '$ansiEscape[38;2;$r;$g;${b}m';
+  String get enableForeground => '$ansiEscape[38;2;$r;$g;$b}m';
 
   /// Включает цвет фона для всего последующего вывода (до сброса).
-  String get enableBackground => '$ansiEscape[48;2;$r;$g;${b}m';
+  String get enableBackground => '$ansiEscape[48;2;$r;$g;$b}m';
 
   /// Сбрасывает цвет текста и фона к стандартным настройкам терминала.
-  static String get reset => '${ansiEscape}[0m';
+  static String get reset => '$ansiEscape[0m';
 
   /// Применяет цвет только к указанному тексту (автоматический сброс).
   String applyForeground(String text) => '$enableForeground$text$reset';
@@ -46,6 +46,7 @@ enum ConsoleColor {
   /// Применяет цвет фона только к указанному тексту (автоматический сброс).
   String applyBackground(String text) => '$enableBackground$text$reset';
 }
+
 /// Расширение для строк, добавляющее методы цветного форматирования и разбивки по длине.
 extension TextRendererUtils on String {
   /// Применяет красный цвет (для ошибок).
@@ -76,9 +77,7 @@ extension TextRendererUtils on String {
           lines.add(buffer.toString());
           buffer.clear();
         }
-        // Если одно слово длиннее maxLength – принудительно разрываем? 
-        // По заданию – не разрываем, но для красоты можно добавить проверку.
-        // Здесь просто добавим слово целиком (даже если длиннее)
+        // Если одно слово длиннее maxLength – добавляем его целиком
         if (word.length > maxLength) {
           lines.add(word);
         } else {
