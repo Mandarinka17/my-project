@@ -1,4 +1,5 @@
-import 'dart:async';
+import 'dart:collection';
+import 'dart:io';
 import 'arguments.dart';
 
 class CommandRunner {
@@ -8,9 +9,30 @@ class CommandRunner {
 
   CommandRunner({this.executableName, required this.version});
 
+  UnmodifiableSetView<Command> get commands =>
+      UnmodifiableSetView(_commands.values.toSet());
+
   void addCommand(Command command) {
-    command.runner = this;
     _commands[command.name] = command;
+    command.runner = this;
+  }
+
+  ArgResults parse(List<String> input) {
+    final results = ArgResults();
+    if (input.isEmpty) {
+      return results;
+    }
+    final commandName = input.first;
+    final command = _commands[commandName];
+    if (command != null) {
+      results.command = command;
+      // Здесь можно добавить парсинг аргументов команды,
+      // но для простоты оставим как есть – вы передадите commandArg позже.
+      if (input.length > 1) {
+        results.commandArg = input.skip(1).join(' ');
+      }
+    }
+    return results;
   }
 
   Future<void> run(List<String> arguments) async {
@@ -19,71 +41,13 @@ class CommandRunner {
       return;
     }
 
-    final commandName = arguments.first;
-    final commandArgs = arguments.skip(1).toList();
-
-    final command = _commands[commandName];
-    if (command == null) {
-      print('Unknown command: $commandName');
+    final results = parse(arguments);
+    if (results.command != null) {
+      await results.command!.run(results);
+    } else {
+      print('Unknown command: ${arguments.first}');
       showHelp();
-      return;
     }
-
-    final argResults = _parseArguments(command, commandArgs);
-    await command.run(argResults);
-  }
-
-  ArgResults _parseArguments(Command command, List<String> args) {
-    final optionsMap = <Option, Object?>{};
-    String? commandArg;
-
-    for (int i = 0; i < args.length; i++) {
-      final arg = args[i];
-      if (arg.startsWith('--')) {
-        final optionName = arg.substring(2);
-        final option = command.options.firstWhere(
-          (opt) => opt.name == optionName,
-          orElse: () => throw Exception('Unknown option: --$optionName'),
-        );
-        if (option.type == OptionType.flag) {
-          optionsMap[option] = true;
-        } else {
-          if (i + 1 < args.length) {
-            optionsMap[option] = args[i + 1];
-            i++;
-          } else {
-            throw Exception('Missing value for option: --$optionName');
-          }
-        }
-      } else if (arg.startsWith('-')) {
-        final abbr = arg.substring(1);
-        final option = command.options.firstWhere(
-          (opt) => opt.abbr == abbr,
-          orElse: () => throw Exception('Unknown option: -$abbr'),
-        );
-        if (option.type == OptionType.flag) {
-          optionsMap[option] = true;
-        } else {
-          if (i + 1 < args.length) {
-            optionsMap[option] = args[i + 1];
-            i++;
-          } else {
-            throw Exception('Missing value for option: -$abbr');
-          }
-        }
-      } else {
-        if (commandArg == null) {
-          commandArg = arg;
-        } else {
-          throw Exception('Too many positional arguments');
-        }
-      }
-    }
-
-    return ArgResults()
-      ..command = command
-      ..commandArg = commandArg
-      ..options = optionsMap;
   }
 
   void showHelp() {
