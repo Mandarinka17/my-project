@@ -1,88 +1,96 @@
-import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'dart:async';
+import 'arguments.dart';
 
 class CommandRunner {
+  final Map<String, Command> _commands = {};
+  final String? executableName;
   final String version;
-  final Map<String, Future<void> Function(List<String>)> _commands = {};
 
-  CommandRunner({required this.version}) {
-    addCommand('version', _handleVersion);
-    addCommand('help', _handleHelp);
-    addCommand('wikipedia', _handleWikipedia);
-  }
+  CommandRunner({this.executableName, required this.version});
 
-  void addCommand(String name, Future<void> Function(List<String>) handler) {
-    _commands[name] = handler;
+  void addCommand(Command command) {
+    command.runner = this;
+    _commands[command.name] = command;
   }
 
   Future<void> run(List<String> arguments) async {
     if (arguments.isEmpty) {
-      await _handleHelp([]);
+      showHelp();
       return;
     }
 
-    final String command = arguments.first;
-    final List<String> args = arguments.skip(1).toList();
+    final commandName = arguments.first;
+    final commandArgs = arguments.skip(1).toList();
 
-    if (_commands.containsKey(command)) {
-      await _commands[command]!(args);
-    } else {
-      print('Unknown command: $command');
-      await _handleHelp([]);
-    }
-  }
-
-  Future<void> _handleVersion(List<String> _) async {
-    print('Dartpedia CLI version $version');
-  }
-
-  Future<void> _handleHelp(List<String> _) async {
-    print('Available commands:');
-    for (final String cmd in _commands.keys) {
-      print('  $cmd');
-    }
-    print('Usage: dart run bin/cli.dart <command> [arguments]');
-  }
-
-  Future<void> _handleWikipedia(List<String> args) async {
-    String articleTitle;
-    if (args.isEmpty) {
-      print('Please provide an article title.');
-      final input = stdin.readLineSync();
-      if (input == null || input.isEmpty) {
-        print('No article title provided. Exiting.');
-        return;
-      }
-      articleTitle = input;
-    } else {
-      articleTitle = args.join(' ');
+    final command = _commands[commandName];
+    if (command == null) {
+      print('Unknown command: $commandName');
+      showHelp();
+      return;
     }
 
-    print('Looking up articles about "$articleTitle". Please wait.');
+    final argResults = _parseArguments(command, commandArgs);
+    await command.run(argResults);
+  }
 
-    final url = Uri.https(
-      'ru.wikipedia.org',
-      '/api/rest_v1/page/summary/$articleTitle',
-    );
+  ArgResults _parseArguments(Command command, List<String> args) {
+    final optionsMap = <Option, Object?>{};
+    String? commandArg;
 
-    try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final extract = data['extract'];
-        if (extract != null && extract.isNotEmpty) {
-          print(extract);
+    for (int i = 0; i < args.length; i++) {
+      final arg = args[i];
+      if (arg.startsWith('--')) {
+        final optionName = arg.substring(2);
+        final option = command.options.firstWhere(
+          (opt) => opt.name == optionName,
+          orElse: () => throw Exception('Unknown option: --$optionName'),
+        );
+        if (option.type == OptionType.flag) {
+          optionsMap[option] = true;
         } else {
-          print('Краткое содержание не найдено.');
+          if (i + 1 < args.length) {
+            optionsMap[option] = args[i + 1];
+            i++;
+          } else {
+            throw Exception('Missing value for option: --$optionName');
+          }
         }
-      } else if (response.statusCode == 404) {
-        print('Статья "$articleTitle" не найдена на Википедии.');
+      } else if (arg.startsWith('-')) {
+        final abbr = arg.substring(1);
+        final option = command.options.firstWhere(
+          (opt) => opt.abbr == abbr,
+          orElse: () => throw Exception('Unknown option: -$abbr'),
+        );
+        if (option.type == OptionType.flag) {
+          optionsMap[option] = true;
+        } else {
+          if (i + 1 < args.length) {
+            optionsMap[option] = args[i + 1];
+            i++;
+          } else {
+            throw Exception('Missing value for option: -$abbr');
+          }
+        }
       } else {
-        print('Ошибка HTTP: ${response.statusCode}');
+        if (commandArg == null) {
+          commandArg = arg;
+        } else {
+          throw Exception('Too many positional arguments');
+        }
       }
-    } catch (e) {
-      print('Ошибка соединения: $e');
+    }
+
+    return ArgResults()
+      ..command = command
+      ..commandArg = commandArg
+      ..options = optionsMap;
+  }
+
+  void showHelp() {
+    print('Usage: ${executableName ?? "dart run bin/cli.dart"} <command> [options]');
+    print('Available commands:');
+    for (var cmd in _commands.values) {
+      print('  ${cmd.name} - ${cmd.description}');
     }
   }
 }
