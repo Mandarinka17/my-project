@@ -6,3 +6,4 @@ export 'src/commands/help_command.dart';
 export 'src/commands/version_command.dart';
 export 'src/commands/wikipedia_command.dart';
 export 'src/exceptions.dart';
+export 'src/console.dart';
