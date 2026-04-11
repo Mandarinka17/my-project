@@ -1,16 +1,20 @@
 import 'package:command_runner/command_runner.dart';
 
-void main(List<String> arguments) async {
-  const version = '0.0.1';
-  
+const version = '0.0.1';
+
+void main(List<String> arguments) {
   final runner = CommandRunner(
     executableName: 'dartpedia',
     version: version,
-    onError: (error) {
-      // Пользовательская обработка ошибок – выводим сообщение без аварийного завершения
-      print('Ошибка: $error');
-      // Можно также показать справку или завершить с кодом 1
-      // exit(1);
+    onError: (Object error) {
+      // Если это критическая ошибка (Error), перебрасываем её
+      if (error is Error) {
+        throw error;
+      }
+      // Если это исключение (Exception) – выводим понятное сообщение
+      if (error is Exception) {
+        print('Ошибка: $error');
+      }
     },
   );
 
@@ -19,5 +23,5 @@ void main(List<String> arguments) async {
     ..addCommand(HelpCommand())
     ..addCommand(WikipediaCommand());
 
-  await runner.run(arguments);
+  runner.run(arguments);
 }
