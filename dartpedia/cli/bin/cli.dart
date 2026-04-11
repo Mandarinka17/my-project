@@ -1,12 +1,12 @@
 import 'package:command_runner/command_runner.dart';
 
-void main(List<String> arguments) async {
-  const version = '0.0.1';
-  final runner = CommandRunner(executableName: 'dartpedia', version: version);
+const version = '0.0.1';
 
-  runner.addCommand(VersionCommand(version));
-  runner.addCommand(HelpCommand());
-  runner.addCommand(WikipediaCommand());
+void main(List<String> arguments) async {
+  final runner = CommandRunner(executableName: 'dartpedia', version: version)
+    ..addCommand(HelpCommand())
+    ..addCommand(VersionCommand(version))
+    ..addCommand(WikipediaCommand());
 
   await runner.run(arguments);
 }
