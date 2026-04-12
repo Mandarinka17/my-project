@@ -13,8 +13,8 @@ dependencies:
     path: ../command_runner
   wikipedia:
     path: ../wikipedia
+  logging: ^1.2.0
 
 dev_dependencies:
   lints: ^6.0.0
-  test: ^1.25.6
   
