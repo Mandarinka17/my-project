@@ -1,4 +1,3 @@
-/// Набор заголовков статьи (канонический, нормализованный, отображаемый).
 class TitlesSet {
   /// Канонический заголовок (например, "Dart_(programming_language)")
   final String canonical;
@@ -17,19 +16,18 @@ class TitlesSet {
 
   /// Создаёт [TitlesSet] из JSON-объекта.
   static TitlesSet fromJson(Map<String, Object?> json) {
-    return switch (json) {
-      {
-        'canonical': final String canonical,
-        'normalized': final String normalized,
-        'display': final String display,
-      } =>
-        TitlesSet(
-          canonical: canonical,
-          normalized: normalized,
-          display: display,
-        ),
-      _ => throw FormatException('Could not deserialize TitlesSet, json=$json'),
-    };
+    if (json case {
+      'canonical': final String canonical,
+      'normalized': final String normalized,
+      'display': final String display,
+    }) {
+      return TitlesSet(
+        canonical: canonical,
+        normalized: normalized,
+        display: display,
+      );
+    }
+    throw FormatException('Could not deserialize TitlesSet, json=$json');
   }
 
   @override
