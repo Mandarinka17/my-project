@@ -1,5 +1,6 @@
 name: command_runner
 version: 0.0.1
+resolution: workspace  
 description: A package for parsing command-line arguments.
 publish_to: none
 
