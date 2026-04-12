@@ -1,13 +1,13 @@
 {
   "roots": [
-    "_",
     "cli",
     "command_runner",
+    "dartpedia",
     "wikipedia"
   ],
   "packages": [
     {
-      "name": "_",
+      "name": "dartpedia",
       "version": "0.0.0",
       "dependencies": [],
       "devDependencies": []

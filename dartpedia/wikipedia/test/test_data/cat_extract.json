@@ -1,0 +1,21 @@
+{
+  "titles": {
+    "canonical": "Cat",
+    "normalized": "Cat",
+    "display": "Cat"
+  },
+  "pageid": 12345,
+  "extract": "The cat (Felis catus) is a domestic species of small carnivorous mammal.",
+  "extract_html": "<p>The cat (Felis catus) is a domestic species of small carnivorous mammal.</p>",
+  "lang": "en",
+  "dir": "ltr",
+  "content_urls": {
+    "desktop": {
+      "page": "https://en.wikipedia.org/wiki/Cat"
+    },
+    "mobile": {
+      "page": "https://en.m.wikipedia.org/wiki/Cat"
+    }
+  },
+  "description": "domesticated mammal"
+}

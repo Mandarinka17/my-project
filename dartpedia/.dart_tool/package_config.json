@@ -296,7 +296,7 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "_",
+      "name": "dartpedia",
       "rootUri": "../",
       "packageUri": "lib/",
       "languageVersion": "3.11"

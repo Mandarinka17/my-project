@@ -1,4 +1,4 @@
-name: _
+name: dartpedia
 publish_to: none
 
 environment:
@@ -8,3 +8,4 @@ workspace:
   - cli
   - command_runner
   - wikipedia
+  

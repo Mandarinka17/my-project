@@ -1,0 +1,21 @@
+{
+  "titles": {
+    "canonical": "Dart",
+    "normalized": "Dart",
+    "display": "Dart"
+  },
+  "pageid": 469521,
+  "extract": "Dart — язык программирования, созданный Google. Dart позиционируется в качестве замены/альтернативы JavaScript.",
+  "extract_html": "<p>Dart — язык программирования, созданный Google. Dart позиционируется в качестве замены/альтернативы JavaScript.</p>",
+  "lang": "ru",
+  "dir": "ltr",
+  "content_urls": {
+    "desktop": {
+      "page": "https://ru.wikipedia.org/wiki/Dart"
+    },
+    "mobile": {
+      "page": "https://ru.m.wikipedia.org/wiki/Dart"
+    }
+  },
+  "description": "язык программирования"
+}
