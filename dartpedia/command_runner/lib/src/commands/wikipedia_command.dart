@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:wikipedia/wikipedia.dart';
 import '../arguments.dart';
 
 class WikipediaCommand extends Command {
   WikipediaCommand() {
     addFlag('help', abbr: 'h', help: 'Show help for this command');
-    addOption('lang', abbr: 'l', defaultValue: 'ru', help: 'Language code (ru, en)');
+    addOption('lang', abbr: 'l', defaultValue: 'en', help: 'Language code (en, ru, etc.)');
   }
 
   @override
@@ -27,6 +26,7 @@ class WikipediaCommand extends Command {
       return null;
     }
 
+    // Получаем название статьи
     String articleTitle;
     if (args.commandArg == null || args.commandArg!.isEmpty) {
       print('Please provide an article title.');
@@ -40,34 +40,17 @@ class WikipediaCommand extends Command {
       articleTitle = args.commandArg!;
     }
 
-    final lang = args.hasOption('lang')
-        ? (args.getOption('lang').input as String)
-        : 'ru';
+    // Язык (пока не используется, но можно расширить)
+    final lang = args.hasOption('lang') ? (args.getOption('lang').input as String) : 'en';
 
     print('Looking up articles about "$articleTitle". Please wait.');
 
-    final url = Uri.https(
-      '$lang.wikipedia.org',
-      '/api/rest_v1/page/summary/$articleTitle',
-    );
-
-    try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final extract = data['extract'];
-        if (extract != null && extract.isNotEmpty) {
-          print(extract);
-        } else {
-          print('Краткое содержание не найдено.');
-        }
-      } else if (response.statusCode == 404) {
-        print('Статья "$articleTitle" не найдена на Википедии.');
-      } else {
-        print('Ошибка HTTP: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Ошибка соединения: $e');
+    // Используем функцию из пакета wikipedia
+    final summary = await getArticleSummaryByTitle(articleTitle);
+    if (summary != null) {
+      print(summary.extract);
+    } else {
+      print('Статья "$articleTitle" не найдена на Википедии.');
     }
     return null;
   }

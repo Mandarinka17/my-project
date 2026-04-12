@@ -1,37 +1,29 @@
-/// Модель статьи, возвращаемая поисковым запросом Wikipedia API.
+/// Полная статья (extract).
 class Article {
-  /// Заголовок статьи.
+  final int pageId;
   final String title;
-
-  /// Краткое содержание (аннотация).
   final String extract;
 
-  Article({required this.title, required this.extract});
+  Article({
+    required this.pageId,
+    required this.title,
+    required this.extract,
+  });
 
-  /// Создаёт список [Article] из JSON-ответа поискового API.
-  static List<Article> listFromJson(Map<String, Object?> json) {
-    final articles = <Article>[];
-    if (json case {'query': {'pages': final Map<String, Object?> pages}}) {
-      for (final entry in pages.entries) {
-        final value = entry.value;
-        if (value case {
-          'title': final String title,
-          'extract': final String extract,
-        }) {
-          articles.add(Article(title: title, extract: extract));
-        }
-      }
-      return articles;
-    }
-    throw FormatException('Could not deserialize Article list, json=$json');
+  factory Article.fromJson(Map<String, dynamic> json) {
+    return Article(
+      pageId: json['pageid'] ?? 0,
+      title: json['title'] ?? '',
+      extract: json['extract'] ?? '',
+    );
   }
 
-  /// Преобразует объект [Article] в JSON-совместимую карту.
-  Map<String, Object?> toJson() => {
-        'title': title,
-        'extract': extract,
-      };
-
-  @override
-  String toString() => 'Article(title: $title, extract: $extract)';
+  static List<Article> listFromJson(Map<String, dynamic> jsonData) {
+    final pages = jsonData['query']['pages'] as Map<String, dynamic>;
+    final articles = <Article>[];
+    for (var page in pages.values) {
+      articles.add(Article.fromJson(page));
+    }
+    return articles;
+  }
 }
