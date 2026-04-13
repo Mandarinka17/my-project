@@ -41,7 +41,7 @@ class WikipediaCommand extends Command {
     }
 
     // Язык (пока не используется, но можно расширить)
-    final lang = args.hasOption('lang') ? (args.getOption('lang').input as String) : 'en';
+   
 
     print('Looking up articles about "$articleTitle". Please wait.');
 

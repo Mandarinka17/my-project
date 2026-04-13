@@ -1,0 +1,5 @@
+[2026-04-13 03:19:42.570196] INFO: Application started
+[2026-04-13 03:21:03.122995] INFO: Application started
+[2026-04-13 03:21:48.927484] INFO: Application started
+[2026-04-13 03:22:01.047037] INFO: Application started
+[2026-04-13 03:22:01.054330] SEVERE: Ошибка: ArgumentException: The first word of input must be a command.
