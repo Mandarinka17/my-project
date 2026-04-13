@@ -32,7 +32,7 @@ void main(List<String> arguments) async {
     ..addCommand(HelpCommand())
     ..addCommand(WikipediaCommand())
     ..addCommand(SearchCommand(logger: appLogger))
-    ..addCommand(GetArticleCommand(logger: appLogger));
+    ..addCommand(GetArticleCommand(logger: appLogger));  // <-- добавлено
 
   await runner.run(arguments);
 }
