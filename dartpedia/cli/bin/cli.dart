@@ -1,10 +1,9 @@
 import 'package:command_runner/command_runner.dart';
-import 'package:cli/cli.dart'; // даёт initFileLogger и write (если экспортирован)
+import 'package:cli/cli.dart';
 
 const String version = '0.0.1';
 
 void main(List<String> arguments) async {
-  // Инициализируем два логгера: один для общего логирования, другой для ошибок
   final appLogger = initFileLogger('dartpedia');
   final errorLogger = initFileLogger('errors');
 
@@ -14,7 +13,6 @@ void main(List<String> arguments) async {
     executableName: 'dartpedia',
     version: version,
     onOutput: (String output) async {
-      // Используем write из console.dart для построчного вывода с задержкой
       await write(output, duration: 50);
     },
     onError: (Object error) {
@@ -32,7 +30,9 @@ void main(List<String> arguments) async {
   runner
     ..addCommand(VersionCommand(version))
     ..addCommand(HelpCommand())
-    ..addCommand(WikipediaCommand());
+    ..addCommand(WikipediaCommand())
+    ..addCommand(SearchCommand(logger: appLogger))
+    ..addCommand(GetArticleCommand(logger: appLogger));
 
   await runner.run(arguments);
 }
